@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<main class='container py-5'>
+    <section class='card card-body bg-transparent'>
+        <h1 class='display-1 text-center'>Home</h1>
+        <p>Looooooorem ipsum, dolor sit amet consectetur adipisicing elit. Omnis, possimus mollitia 
+        aliquid natus quod ratione esse veniam est commodi expedita eveniet hic maxime 
+        eius nemo sequi laborum odio consequatur labore quisquam rerum sed voluptas. 
+        Suscipit, dicta tempore aliquam beatae nesciunt repudiandae perspiciatis, quo sit
+        exercitationem mollitia dolores! Repudiandae voluptatum eligendi dignissimos modi 
+        obcaecati ullam delectus! Earum unde corrupti natus porro eius id repudiandae 
+        facilis, modi maxime perferendis suscipit, perspiciatis odit aspernatur, inventore 
+        maiores magni dicta iste voluptas! Similique quia deleniti numquam quae tempore 
+        laudantium sed. Quis nihil accusantium deleniti, cumque officia voluptates eius 
+        tempore ipsum optio nostrum nulla! Adipisci, iure.</p>
+        {% if user.is_authenticated %}
+        <a class='btn btn-dark text-center pd-4' href='/signup'>
+            Tasks
+        </a>
+        {% else %}
+        <div class='text-center'>
+            <a class='btn btn-dark' href='/signin'>
+                Sign In
+            </a>
+            <a class='btn btn-dark' href='/signup'>
+                Sign Up
+            </a>
+        </div>
+        {% endif %}
+    </section>
+</main>
+{% endblock%}
