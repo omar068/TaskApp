@@ -2,7 +2,7 @@
 # exit on error
 set -o errexit
 
-poetry install
+#poetry install
 sudo apt install libpq-dev python3-dev
 
 pip install wheel
