@@ -3,7 +3,7 @@
 set -o errexit
 
 poetry install
-sudo apt install python3-dev
+sudo apt install libpq-dev python3-dev
 
 pip install wheel
 pip install -r requirements.txt
