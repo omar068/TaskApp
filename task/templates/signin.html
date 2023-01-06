@@ -10,6 +10,7 @@
         style="--bs-bg-opacity: 0.5"
       >
         {% csrf_token %}
+        <div class="alert alert-danger">{{error}}</div>
         <h1>Sign In</h1>
         <div class="mb-3">
           <label for="username" class="form-label">Username</label>
