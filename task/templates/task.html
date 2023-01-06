@@ -6,12 +6,17 @@
     <div class='row'>
         <div class='col-md-6 offset-md-3'>
             <h1 class='text-center display-3 py-5'>{{title}}</h1>
-            {% if user.is_authenticated %}
                 <div class='d-flex justify-content-between'>
-                <a class='btn btn-primary text-center pd-4' href="/tasks/create">Create Task</a>
+                    {% if cant <= 10 %}
+                <a class='btn btn-primary btn-circle text-center pd-4' href="/tasks/create">Create Task</a>
+                    {% else %}
+                <a class='btn btn-primary btn-circle text-center pd-4 disabled' href="/tasks/create">Create Task</a>
+                    {% endif %}
                 <h4>{{user}}</h4>
                 </div>
-            {% endif %}
+                {% if cant > 10 %}
+                <div class="alert alert-danger">Sorry, you have reached the maximum number of tasks. If you want create new task, you need delete a completed task.</div>
+                {% endif %}
                 <ul class='list-group'>
                     {% for task in tasks %}
                         {% if task.important and not task.datecompleted %}

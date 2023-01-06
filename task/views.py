@@ -27,9 +27,9 @@ def signup(request):
         print(request.POST)
         if request.POST['password1'] == request.POST['password2']:
             try:
-                # Regiaster User
+                # Register User
                 user = User.objects.create_user(
-                    username=request.POST['username'], password=request.POST['password1'])
+                    username=request.POST['username'],email=request.POST['email'], password=request.POST['password1'])
                 user.save()
                 login(request, user)
                 return redirect('tasks')
@@ -59,13 +59,10 @@ def signin(request):
         if user is None:
             return render(request, 'signin.html', {
             'form' : AuthenticationForm,
-            'error' : 'Username ir password is incorrect'
+            'error' : 'Username or password is incorrect. \n¿No te has registrado? ¡Ay ta!'
         })
         else:
             login(request, user)
-            render(request, 'base.html', {
-                'username' : user.get_username()
-            })
             return redirect('tasks')
 
 @login_required
@@ -73,11 +70,12 @@ def tasks(request):
     all_tasks = Task.objects.filter(user=request.user, datecompleted__isnull = True, important = False).order_by('-created')
     all_tasks |= Task.objects.filter(user=request.user, datecompleted__isnull = True, important = True).order_by('-created')
     all_tasks |= Task.objects.filter(user=request.user, datecompleted__isnull = False).order_by('-created')
-    print(request.user)
+    print(len(all_tasks))
     return render(request, 'task.html', {
         'tasks' : all_tasks,
         'title' : 'All Tasks',
-        'user' : request.user
+        'user' : request.user,
+        'cant' : len(all_tasks)
     })
 
 @login_required
@@ -144,6 +142,7 @@ def task_detail(request, task_id):
 @login_required
 def complete_task(request, task_id):
     task = get_object_or_404(Task, pk=task_id, user=request.user)
+    print('Aquí estoy')
     if request.method == 'POST':
         task.datecompleted = timezone.now()
         task.save()
@@ -152,6 +151,7 @@ def complete_task(request, task_id):
 @login_required
 def delete_task(request, task_id):
     task = get_object_or_404(Task, pk=task_id, user = request.user)
+    print('Delete acá')
     if request.method == 'POST':
         task.delete()
         return redirect('tasks')
