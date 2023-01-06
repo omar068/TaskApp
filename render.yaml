@@ -1,11 +1,11 @@
 databases:
-  - name: TaskApp
+  - name: taskapp
     databaseName: taskapp
-    user: TaskApp
+    user: taskapp
 
 services:
   - type: web
-    name: TaskApp
+    name: taskapp
     env: python
     buildCommand: "./build.sh"
     startCommand: "gunicorn mysite.wsgi:application"

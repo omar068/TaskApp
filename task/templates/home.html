@@ -4,19 +4,13 @@
 
 <main class='container py-5'>
     <section class='card card-body bg-transparent'>
-        <h1 class='display-1 text-center'>Home</h1>
-        <p>Looooooorem ipsum, dolor sit amet consectetur adipisicing elit. Omnis, possimus mollitia 
-        aliquid natus quod ratione esse veniam est commodi expedita eveniet hic maxime 
-        eius nemo sequi laborum odio consequatur labore quisquam rerum sed voluptas. 
-        Suscipit, dicta tempore aliquam beatae nesciunt repudiandae perspiciatis, quo sit
-        exercitationem mollitia dolores! Repudiandae voluptatum eligendi dignissimos modi 
-        obcaecati ullam delectus! Earum unde corrupti natus porro eius id repudiandae 
-        facilis, modi maxime perferendis suscipit, perspiciatis odit aspernatur, inventore 
-        maiores magni dicta iste voluptas! Similique quia deleniti numquam quae tempore 
-        laudantium sed. Quis nihil accusantium deleniti, cumque officia voluptates eius 
-        tempore ipsum optio nostrum nulla! Adipisci, iure.</p>
-        {% if user.is_authenticated %}
-        <a class='btn btn-dark text-center pd-4' href='/signup'>
+        <div class="p-5 mb-4 bg-light rounded-3 bg-transparent">
+            <div class="container-fluid py-5">
+              <h1 class="display-1">Bienvenidos a TaskApp</h1>
+              <p class="col-md-8 fs-4">TaskApp es una aplicación que te ayudará con la gestión de tus tareas. Te brindará
+                la posibilidad de crear, editar, eliminar y marcar como completadas tus tareas.</p>
+                {% if user.is_authenticated %}
+        <a class='btn btn-dark btn-lg' href='/tasks'>
             Tasks
         </a>
         {% else %}
@@ -29,6 +23,9 @@
             </a>
         </div>
         {% endif %}
+            </div>
+        </div>
+        
     </section>
 </main>
 {% endblock%}
