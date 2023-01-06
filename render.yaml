@@ -1,18 +1,18 @@
 databases:
-  - name: taskapp
-    databaseName: taskapp
-    user: taskapp
+  - name: mysite
+    databaseName: mysite
+    user: mysite
 
 services:
   - type: web
-    name: taskapp
+    name: mysite
     env: python
     buildCommand: "./build.sh"
     startCommand: "gunicorn mysite.wsgi:application"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: taskapp
+          name: mysite
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
