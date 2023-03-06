@@ -44,8 +44,44 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'task'
+    'task',
+    'django.contrib.sites',
+
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google'
 ]
+
+SITE_ID = 1
+
+#Línea para que se nos muestre por consola las direcciones de correo electrónico que se registran en la página
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+#Método de autenticación
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+#Se requiere el email para autenticarse
+ACCOUNT_EMAIL_REQUIRED=True
+#Verificación por correo electrónico
+ACCOUNT_EMAIL_VERIFICATION='mandatory'
+#Días en los que expira la confirmación del correo electrónico en el sitio web
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+#Para que no pida confirmación a la hora de hacer un loggout
+ACCOUNT_LOGOUT_ON_GET=True
+
+# Provider specific settings
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        # For each OAuth based provider, either add a ``SocialApp``
+        # (``socialaccount`` app) containing the required client
+        # credentials, or list them here:
+        'APP': {
+            'client_id': '597254243269-pld5ied4cm7d845npjn3m2mhj5dmf8tg.apps.googleusercontent.com',
+            'secret': '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',
+            'key': ''
+        }
+    }
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -74,6 +110,14 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 WSGI_APPLICATION = 'djangocrud.wsgi.application'
