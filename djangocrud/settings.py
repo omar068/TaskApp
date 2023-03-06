@@ -53,7 +53,10 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google'
 ]
 
-SITE_ID = 1
+SITE_ID = 2
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 #Línea para que se nos muestre por consola las direcciones de correo electrónico que se registran en la página
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -75,6 +78,10 @@ SOCIALACCOUNT_PROVIDERS = {
         # For each OAuth based provider, either add a ``SocialApp``
         # (``socialaccount`` app) containing the required client
         # credentials, or list them here:
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
         'APP': {
             'client_id': '597254243269-pld5ied4cm7d845npjn3m2mhj5dmf8tg.apps.googleusercontent.com',
             'secret': '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',
@@ -99,7 +106,7 @@ ROOT_URLCONF = 'djangocrud.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
