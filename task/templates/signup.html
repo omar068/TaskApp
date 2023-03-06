@@ -1,5 +1,5 @@
 {% extends 'base.html'%}
-
+{% load socialaccount %} 
 {% block content %}
 
 
@@ -11,6 +11,7 @@
             <form action="/signup" method="POST" class='card card-body bg-transparent' style="--bs-bg-opacity: .5;">
                 {% csrf_token %}
                 <h1 class='text-center'>Signup</h1>
+                
                 {{error}}
                     <div class='mb-3'>
                     <label for="username" class="form-label">Username</label>
@@ -29,8 +30,29 @@
                     <input type="password" name="password2" id="password2" class="form-control" placeholder="Confirm password" required>
                     </div>
                 <button class = 'btn btn-primary'>
-                    Signup
+                    Sign Up
                 </button>
+                <br>
+                <a class = 'btn btn-outline-primary' href='login'>
+                    Sign In
+                </a>
+
+                <div class="or-container" style="
+                align-items: center;
+                color: #000;
+                display: flex;
+                margin: 25px 0;"><div class="line-separator" style="
+                background-color: #000;
+                flex-grow: 5;
+                height: 1px;"></div> <div class="or-label" style="
+                flex-grow: 1;
+                margin: 0 15px;
+                text-align: center;">or</div><div class="line-separator" style="
+                background-color: #000;
+                flex-grow: 5;
+                height: 1px;"></div></div>
+                
+                <a class="btn btn-outline-secondary btn-google btn-block fs-6 text-black"><img src="https://img.icons8.com/color/16/000000/google-logo.png"> Sign In With Google</a>
             </form>
         </div>
     </div>
