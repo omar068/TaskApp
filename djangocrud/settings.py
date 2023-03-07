@@ -55,7 +55,7 @@ INSTALLED_APPS = [
 
 SITE_ID = 2
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'tasks'
 LOGOUT_REDIRECT_URL = '/'
 
 #Línea para que se nos muestre por consola las direcciones de correo electrónico que se registran en la página
@@ -63,12 +63,12 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 #Método de autenticación
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
-#Se requiere el email para autenticarse
-ACCOUNT_EMAIL_REQUIRED=True
-#Verificación por correo electrónico
-ACCOUNT_EMAIL_VERIFICATION='mandatory'
-#Días en los que expira la confirmación del correo electrónico en el sitio web
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+# #Se requiere el email para autenticarse
+# ACCOUNT_EMAIL_REQUIRED=True
+# #Verificación por correo electrónico
+# ACCOUNT_EMAIL_VERIFICATION='mandatory'
+# #Días en los que expira la confirmación del correo electrónico en el sitio web
+# ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
 #Para que no pida confirmación a la hora de hacer un loggout
 ACCOUNT_LOGOUT_ON_GET=True
 
@@ -86,6 +86,9 @@ SOCIALACCOUNT_PROVIDERS = {
             'client_id': '597254243269-pld5ied4cm7d845npjn3m2mhj5dmf8tg.apps.googleusercontent.com',
             'secret': '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',
             'key': ''
+        },
+        'AUTH_PARAMS' : {
+            'acces_type' : 'online',
         }
     }
 }
