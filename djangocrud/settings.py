@@ -14,9 +14,18 @@ from pathlib import Path
 import os
 import dj_database_url
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file if present
+env_path = BASE_DIR / '.env'
+if env_path.exists():
+    with open(env_path, encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -53,7 +62,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google'
 ]
 
-SITE_ID = 2
+SITE_ID = int(os.environ.get('SITE_ID', 1))
 
 LOGIN_REDIRECT_URL = 'tasks'
 LOGOUT_REDIRECT_URL = '/'
@@ -83,12 +92,12 @@ SOCIALACCOUNT_PROVIDERS = {
             'email',
         ],
         'APP': {
-            'client_id': '597254243269-pld5ied4cm7d845npjn3m2mhj5dmf8tg.apps.googleusercontent.com',
-            'secret': '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',
+            'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
+            'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
             'key': ''
         },
         'AUTH_PARAMS' : {
-            'acces_type' : 'online',
+            'access_type' : 'online',
         }
     }
 }
@@ -192,6 +201,7 @@ if not DEBUG:    # Tell Django to copy statics to the `staticfiles` directory
     # Turn on WhiteNoise storage backend that takes care of compressing static files
     # and creating unique names for each version so they can safely be cached forever.
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
 
 LOGIN_URL ='/signin'
 
