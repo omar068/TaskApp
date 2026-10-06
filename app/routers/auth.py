@@ -172,21 +172,34 @@ def ensure_user_default_workspace(user: User, session: Session) -> Workspace:
 
 
 def _get_redirect_uri(request: Request) -> str:
-    # Compatible con el Redirect URI ya configurado en Google Cloud Console:
-    # http://localhost:8000/accounts/google/login/callback/
     base = str(request.base_url).rstrip("/")
     if "onrender.com" in base and base.startswith("http://"):
         base = base.replace("http://", "https://", 1)
     return f"{base}/accounts/google/login/callback/"
 
 
+def _resolve_frontend_url(request: Request, state: str | None = None) -> str:
+    if state and (state.startswith("http://") or state.startswith("https://")):
+        return state.rstrip("/")
+    origin = request.headers.get("origin")
+    if origin and (origin.startswith("http://") or origin.startswith("https://")):
+        return origin.rstrip("/")
+    referer = request.headers.get("referer")
+    if referer and (referer.startswith("http://") or referer.startswith("https://")):
+        from urllib.parse import urlparse
+        parsed = urlparse(referer)
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return settings.FRONTEND_URL.rstrip("/")
+
+
 @router.get("/api/v1/auth/google/login")
-def google_login(request: Request):
+def google_login(request: Request, frontend_url: str | None = None):
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(
             status_code=400,
-            detail="Falta configurar GOOGLE_CLIENT_ID en el archivo .env",
+            detail="Falta configurar GOOGLE_CLIENT_ID en las variables de entorno",
         )
+    caller_frontend = _resolve_frontend_url(request, frontend_url)
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
         "redirect_uri": _get_redirect_uri(request),
@@ -195,20 +208,24 @@ def google_login(request: Request):
         "access_type": "offline",
         "include_granted_scopes": "true",
         "prompt": "consent",
+        "state": caller_frontend,
     }
     return {"auth_url": f"{GOOGLE_AUTH_URL}?{urlencode(params)}"}
 
 
 @router.get("/accounts/google/login/callback/")
+@router.get("/google/login/callback/")
 @router.get("/api/v1/auth/google/callback")
 async def google_callback(
     request: Request,
     code: str | None = None,
+    state: str | None = None,
     error: str | None = None,
     session: Session = Depends(get_session),
 ):
+    target_frontend = _resolve_frontend_url(request, state)
     if error or not code:
-        return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error={error or 'missing_code'}")
+        return RedirectResponse(url=f"{target_frontend}/?error={error or 'missing_code'}")
 
     redirect_uri = _get_redirect_uri(request)
     async with httpx.AsyncClient(timeout=15.0) as client:
@@ -223,7 +240,7 @@ async def google_callback(
             },
         )
         if token_resp.status_code != 200:
-            return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=token_exchange_failed")
+            return RedirectResponse(url=f"{target_frontend}/?error=token_exchange_failed")
 
         token_data = token_resp.json()
         access_token = token_data.get("access_token")
@@ -235,7 +252,7 @@ async def google_callback(
             headers={"Authorization": f"Bearer {access_token}"},
         )
         if userinfo_resp.status_code != 200:
-            return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=userinfo_failed")
+            return RedirectResponse(url=f"{target_frontend}/?error=userinfo_failed")
 
         profile = userinfo_resp.json()
 
@@ -272,42 +289,7 @@ async def google_callback(
     ensure_user_default_workspace(user, session)
 
     jwt_token = create_access_token(user.id, user.email)
-    return RedirectResponse(url=f"{settings.FRONTEND_URL}/auth/callback?token={jwt_token}")
-
-
-class DemoLoginRequest(BaseModel):
-    email: str = "omar@taskapp.dev"
-    full_name: str = "Omar (Modo Local)"
-
-
-@router.post("/api/v1/auth/demo-login")
-def demo_login(payload: DemoLoginRequest, session: Session = Depends(get_session)):
-    """Permite probar rápidamente en local con cualquier correo para simular múltiples usuarios."""
-    clean_email = payload.email.strip().lower()
-    user = session.exec(select(User).where(User.email == clean_email)).first()
-    if not user:
-        user = User(
-            email=clean_email,
-            full_name=payload.full_name.strip() or clean_email.split("@")[0],
-            avatar_url=f"https://api.dicebear.com/7.x/avataaars/svg?seed={clean_email}",
-        )
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-
-    ensure_user_default_workspace(user, session)
-    token = create_access_token(user.id, user.email)
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "full_name": user.full_name,
-            "avatar_url": user.avatar_url,
-            "google_connected": bool(user.google_access_token),
-        },
-    }
+    return RedirectResponse(url=f"{target_frontend}/?token={jwt_token}")
 
 
 @router.get("/api/v1/auth/me")
