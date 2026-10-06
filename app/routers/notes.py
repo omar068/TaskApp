@@ -19,6 +19,11 @@ class FolderCreate(BaseModel):
     icon: str = "📁"
 
 
+class FolderUpdate(BaseModel):
+    name: Optional[str] = None
+    icon: Optional[str] = None
+
+
 class NoteCreate(BaseModel):
     workspace_id: int
     folder_id: Optional[int] = None
@@ -87,6 +92,36 @@ def create_folder(
         name=payload.name,
         icon=payload.icon or "📁",
     )
+    session.add(folder)
+    session.commit()
+    session.refresh(folder)
+    return folder
+
+
+@router.patch("/note-folders/{folder_id}")
+def update_folder(
+    folder_id: int,
+    payload: FolderUpdate,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    folder = session.get(NoteFolder, folder_id)
+    if not folder:
+        raise HTTPException(status_code=404, detail="Carpeta no encontrada")
+
+    member = session.exec(
+        select(WorkspaceMember).where(
+            WorkspaceMember.workspace_id == folder.workspace_id,
+            WorkspaceMember.user_id == current_user.id,
+        )
+    ).first()
+    if not member:
+        raise HTTPException(status_code=403, detail="Sin permiso")
+
+    if payload.name is not None and payload.name.strip():
+        folder.name = payload.name.strip()
+    if payload.icon is not None and payload.icon.strip():
+        folder.icon = payload.icon.strip()
     session.add(folder)
     session.commit()
     session.refresh(folder)

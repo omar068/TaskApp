@@ -30,6 +30,13 @@ class ProjectCreate(BaseModel):
     color: str = "#6366f1"
 
 
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+
+
 class ColumnCreate(BaseModel):
     title: str
     color: str = "#64748b"
@@ -134,6 +141,49 @@ def create_project(
         )
     session.commit()
     return project
+
+
+@router.patch("/projects/{project_id}")
+def update_project(
+    project_id: int,
+    payload: ProjectUpdate,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    project = _verify_project_access(project_id, current_user.id, session)
+    if payload.name is not None and payload.name.strip():
+        project.name = payload.name.strip()
+    if payload.description is not None:
+        project.description = payload.description
+    if payload.icon is not None:
+        project.icon = payload.icon
+    if payload.color is not None:
+        project.color = payload.color
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+    return project
+
+
+@router.delete("/projects/{project_id}")
+def delete_project(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    project = _verify_project_access(project_id, current_user.id, session)
+    tasks = session.exec(select(Task).where(Task.project_id == project_id)).all()
+    for t in tasks:
+        subtasks = session.exec(select(Subtask).where(Subtask.task_id == t.id)).all()
+        for st in subtasks:
+            session.delete(st)
+        session.delete(t)
+    cols = session.exec(select(KanbanColumn).where(KanbanColumn.project_id == project_id)).all()
+    for c in cols:
+        session.delete(c)
+    session.delete(project)
+    session.commit()
+    return {"ok": True}
 
 
 @router.get("/projects/{project_id}/board")

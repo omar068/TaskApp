@@ -311,7 +311,8 @@ async def google_callback(
         session.rollback()
 
     jwt_token = create_access_token(user.id, user.email)
-    return RedirectResponse(url=f"{target_frontend}/?token={jwt_token}")
+    sep = "&" if "?" in target_frontend else "?"
+    return RedirectResponse(url=f"{target_frontend}{sep}token={jwt_token}")
 
 
 @router.get("/api/v1/auth/me")
