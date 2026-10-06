@@ -42,17 +42,28 @@ def _slugify(text: str) -> str:
 
 def ensure_user_default_workspace(user: User, session: Session) -> Workspace:
     """Ensures a new user gets a personal Workspace, a starter Project, 4 Kanban columns, a sample Task and a sample Note."""
-    existing_personal = session.exec(
-        select(Workspace).where(
-            Workspace.owner_id == user.id,
-            Workspace.is_personal == True,
-        )
+    existing_ws = session.exec(
+        select(Workspace).where(Workspace.owner_id == user.id)
     ).first()
-    if existing_personal:
-        return existing_personal
+    if existing_ws:
+        # Ensure owner membership exists
+        member = session.exec(
+            select(WorkspaceMember).where(
+                WorkspaceMember.workspace_id == existing_ws.id,
+                WorkspaceMember.user_id == user.id,
+            )
+        ).first()
+        if not member:
+            session.add(WorkspaceMember(workspace_id=existing_ws.id, user_id=user.id, role="owner"))
+            session.commit()
+        return existing_ws
 
+    import uuid
     base_slug = _slugify(user.full_name or user.email.split("@")[0])
     slug = f"{base_slug}-{user.id}"
+    if session.exec(select(Workspace).where(Workspace.slug == slug)).first():
+        slug = f"{slug}-{uuid.uuid4().hex[:6]}"
+
     ws = Workspace(
         name=f"Espacio de {user.full_name or user.email.split('@')[0]}",
         slug=slug,
@@ -137,12 +148,16 @@ def ensure_user_default_workspace(user: User, session: Session) -> Workspace:
         )
     )
 
+    note_slug = f"bienvenido-taskapp-{user.id}"
+    if session.exec(select(Note).where(Note.slug == note_slug)).first():
+        note_slug = f"{note_slug}-{uuid.uuid4().hex[:6]}"
+
     sample_note = Note(
         workspace_id=ws.id,
         project_id=project.id,
         author_id=user.id,
         title="Bienvenido a tus Apuntes & Blog en TaskApp",
-        slug=f"bienvenido-taskapp-{user.id}",
+        slug=note_slug,
         summary="Guía rápida para usar comandos por teclado (/), bloques enriquecidos y publicar notas como Blog.",
         cover_emoji="✨",
         is_public=True,
@@ -262,6 +277,9 @@ async def google_callback(
     avatar_url = profile.get("picture")
 
     user = session.exec(select(User).where(User.email == email)).first()
+    if not user and google_sub:
+        user = session.exec(select(User).where(User.google_sub == google_sub)).first()
+
     now = datetime.now(timezone.utc)
     if not user:
         user = User(
@@ -275,6 +293,7 @@ async def google_callback(
         )
         session.add(user)
     else:
+        user.email = email or user.email
         user.full_name = full_name or user.full_name
         user.avatar_url = avatar_url or user.avatar_url
         user.google_sub = google_sub or user.google_sub
@@ -286,7 +305,10 @@ async def google_callback(
 
     session.commit()
     session.refresh(user)
-    ensure_user_default_workspace(user, session)
+    try:
+        ensure_user_default_workspace(user, session)
+    except Exception:
+        session.rollback()
 
     jwt_token = create_access_token(user.id, user.email)
     return RedirectResponse(url=f"{target_frontend}/?token={jwt_token}")
