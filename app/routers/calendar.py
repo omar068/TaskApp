@@ -89,7 +89,7 @@ async def get_calendar_events(
         )
 
     return {
-        "google_connected": bool(current_user.google_access_token),
+        "google_connected": bool(getattr(current_user, "google_calendar_connected", False) and current_user.google_access_token),
         "events": google_events + task_events,
     }
 
@@ -100,10 +100,10 @@ async def create_event(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    if not current_user.google_access_token:
+    if not getattr(current_user, "google_calendar_connected", False) or not current_user.google_access_token:
         raise HTTPException(
             status_code=400,
-            detail="Debes iniciar sesión con tu cuenta de Google para crear eventos directamente en Google Calendar, o crea una tarea con fecha límite en el tablero Kanban.",
+            detail="Debes conectar tu cuenta de Google Calendar primero con el botón 'Conectar Google Calendar'.",
         )
     ev = await create_google_calendar_event(
         current_user,

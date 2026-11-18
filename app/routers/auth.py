@@ -27,7 +27,13 @@ GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
-SCOPES = [
+LOGIN_SCOPES = [
+    "openid",
+    "email",
+    "profile",
+]
+
+CALENDAR_SCOPES = [
     "openid",
     "email",
     "profile",
@@ -208,21 +214,27 @@ def _resolve_frontend_url(request: Request, state: str | None = None) -> str:
 
 
 @router.get("/api/v1/auth/google/login")
-def google_login(request: Request, frontend_url: str | None = None):
+def google_login(
+    request: Request,
+    frontend_url: str | None = None,
+    scope: str = "login",
+):
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(
             status_code=400,
             detail="Falta configurar GOOGLE_CLIENT_ID en las variables de entorno",
         )
     caller_frontend = _resolve_frontend_url(request, frontend_url)
+    is_calendar = scope == "calendar"
+    requested_scopes = CALENDAR_SCOPES if is_calendar else LOGIN_SCOPES
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
         "redirect_uri": _get_redirect_uri(request),
         "response_type": "code",
-        "scope": " ".join(SCOPES),
+        "scope": " ".join(requested_scopes),
         "access_type": "offline",
         "include_granted_scopes": "true",
-        "prompt": "consent",
+        "prompt": "consent" if is_calendar else "select_account",
         "state": caller_frontend,
     }
     return {"auth_url": f"{GOOGLE_AUTH_URL}?{urlencode(params)}"}
@@ -261,6 +273,8 @@ async def google_callback(
         access_token = token_data.get("access_token")
         refresh_token = token_data.get("refresh_token")
         expires_in = int(token_data.get("expires_in", 3600))
+        granted_scope = str(token_data.get("scope", ""))
+        has_calendar_permission = "calendar" in granted_scope
 
         userinfo_resp = await client.get(
             GOOGLE_USERINFO_URL,
@@ -289,6 +303,7 @@ async def google_callback(
             google_sub=google_sub,
             google_access_token=access_token,
             google_refresh_token=refresh_token,
+            google_calendar_connected=has_calendar_permission,
             token_expiry=now + timedelta(seconds=expires_in),
         )
         session.add(user)
@@ -300,6 +315,8 @@ async def google_callback(
         user.google_access_token = access_token
         if refresh_token:
             user.google_refresh_token = refresh_token
+        if has_calendar_permission:
+            user.google_calendar_connected = True
         user.token_expiry = now + timedelta(seconds=expires_in)
         session.add(user)
 
@@ -322,5 +339,5 @@ def get_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "full_name": current_user.full_name,
         "avatar_url": current_user.avatar_url,
-        "google_connected": bool(current_user.google_access_token),
+        "google_connected": bool(getattr(current_user, "google_calendar_connected", False) and current_user.google_access_token),
     }

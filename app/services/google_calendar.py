@@ -25,7 +25,7 @@ GOOGLE_ID_TO_COLOR: Dict[str, str] = {v: k for k, v in COLOR_TO_GOOGLE_ID.items(
 
 async def get_valid_google_token(user: User, session: Session) -> Optional[str]:
     """Returns a valid Google access token, refreshing it via refresh_token if expired."""
-    if not user.google_access_token:
+    if not getattr(user, "google_calendar_connected", False) or not user.google_access_token:
         return None
 
     now = datetime.now(timezone.utc)
@@ -143,6 +143,8 @@ async def list_google_calendar_events(
     time_min: Optional[str] = None,
     time_max: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
+    if not getattr(user, "google_calendar_connected", False):
+        return []
     token = await get_valid_google_token(user, session)
     if not token:
         return []

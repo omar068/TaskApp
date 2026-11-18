@@ -13,6 +13,7 @@ def init_db() -> None:
         "ALTER TABLE notes ADD COLUMN folder_id INTEGER REFERENCES note_folders(id)",
         "ALTER TABLE tasks ADD COLUMN category VARCHAR DEFAULT 'task'",
         "ALTER TABLE tasks ADD COLUMN color VARCHAR DEFAULT 'indigo'",
+        "ALTER TABLE users ADD COLUMN google_calendar_connected BOOLEAN DEFAULT FALSE",
     ]:
         with engine.begin() as conn:
             try:

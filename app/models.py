@@ -19,6 +19,7 @@ class User(SQLModel, table=True):
     google_access_token: Optional[str] = Field(default=None)
     google_refresh_token: Optional[str] = Field(default=None)
     token_expiry: Optional[datetime] = Field(default=None)
+    google_calendar_connected: bool = Field(default=False)
     created_at: datetime = Field(default_factory=utc_now)
 
 
